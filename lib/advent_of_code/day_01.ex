@@ -3,8 +3,7 @@ defmodule AdventOfCode.Day01 do
 
   def part1(input) do
     input
-    |> String.trim()
-    |> String.split("\n")
+    |> String.split("\n", trim: true)
     |> Enum.reduce(0, fn row, count ->
       row
       |> String.replace(~r|\D|, "", global: true)
@@ -23,8 +22,7 @@ defmodule AdventOfCode.Day01 do
 
   def part2(input) do
     input
-    |> String.trim()
-    |> String.split("\n")
+    |> String.split("\n", trim: true)
     |> Enum.reduce(0, fn row, count ->
       row
       |> String.codepoints()
