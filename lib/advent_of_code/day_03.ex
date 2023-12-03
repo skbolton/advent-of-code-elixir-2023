@@ -31,7 +31,6 @@ defmodule AdventOfCode.Day03 do
         _has_neigbors -> true
       end
     end)
-    |> Enum.sort_by(fn {row, _col} -> row end)
     |> Enum.reduce(%{}, fn {coord, value}, sums ->
       case left_neighbors(coord, digits) do
         # we are the leftmost
