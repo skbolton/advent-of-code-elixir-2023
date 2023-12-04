@@ -5,12 +5,12 @@ defmodule CoordinateGrid do
   @type value :: term()
 
   @typedoc """
-  x,y coordinate for location in `t:grid`.
+  x,y coordinate for location in `t`.
   """
   @type coordinate :: {integer(), integer()}
 
   @typedoc """
-  Representation of item at a `t:coordinate` in `t:grid`.
+  Representation of item at a `t:coordinate` in `t`.
   """
   @type member(a) :: {:value, a} | nil
   @type member :: {:value, value()} | nil
@@ -19,7 +19,7 @@ defmodule CoordinateGrid do
   @type t :: %__MODULE__{g: %{coordinate() => member()}}
 
   @typedoc """
-  A representation of a valid `t:coordinate` in `t:grid` and `t:value` it is
+  A representation of a valid `t:coordinate` in `t` and `t:value` it is
   holding.
   """
   @type cell :: nil | {coordinate(), value()}
@@ -61,7 +61,7 @@ defmodule CoordinateGrid do
   @spec has_cell?(t(), coordinate()) :: boolean()
   @spec has_cell?(t(), coordinate(), predicate()) :: boolean()
   @doc """
-  Checks to see if `t:grid` at `t:coord` contains a `t:cell`.
+  Checks to see if `t` at `t:coord` contains a `t:cell`.
 
   An optional predicate can be passed to further test found `t:cell`.
   """

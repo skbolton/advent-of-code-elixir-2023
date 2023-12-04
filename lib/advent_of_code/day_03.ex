@@ -12,7 +12,7 @@ defmodule AdventOfCode.Day03 do
     |> build_number_paths_by_gears()
   end
 
-  @spec parse_grid(Strig.t()) :: CoordinateGrid.t({:digit | :symbol, String.t()})
+  @spec parse_grid(String.t()) :: CoordinateGrid.t({:digit | :symbol, String.t()})
   def parse_grid(input) do
     input
     |> String.split("\n", trim: true)
