@@ -1,97 +1,103 @@
 defmodule AdventOfCode.Day03 do
   def part1(input) do
     input
+    |> parse_grid()
+    |> build_number_paths_near_symbols()
+    |> Enum.sum()
+  end
+
+  def part2(input) do
+    input
+    |> parse_grid()
+    |> build_number_paths_by_gears()
+  end
+
+  @spec parse_grid(Strig.t()) :: CoordinateGrid.t({:digit | :symbol, String.t()})
+  def parse_grid(input) do
+    input
     |> String.split("\n", trim: true)
     |> Enum.map(&String.codepoints/1)
     |> Enum.with_index()
-    |> Enum.reduce({_symbols = Map.new(), _digits = Map.new()}, fn {cells, row_nr}, coordinates ->
-      cells
-      |> Enum.with_index()
-      |> Enum.reduce(coordinates, fn
-        {".", _cell}, {_symbols, _digits} = coordinates ->
-          coordinates
+    |> Enum.reduce(
+      CoordinateGrid.new(),
+      fn {row_values, row}, grid ->
+        row_values
+        |> Enum.with_index()
+        |> Enum.reduce(grid, fn
+          {".", _col}, grid ->
+            grid
 
-        {number, column_nr}, {symbols, digits} when number in ~w(0 1 2 3 4 5 6 7 8 9) ->
-          {symbols, Map.put(digits, {row_nr, column_nr}, number)}
+          {digit, col}, grid when digit in ~w(0 1 2 3 4 5 6 7 8 9) ->
+            CoordinateGrid.add(grid, {row, col}, {:digit, digit})
 
-        {symbol, column_nr}, {symbols, digits} ->
-          {Map.put(symbols, {row_nr, column_nr}, symbol), digits}
+          {symbol, col}, grid ->
+            CoordinateGrid.add(grid, {row, col}, {:symbol, symbol})
+        end)
+      end
+    )
+  end
+
+  def build_number_paths_near_symbols(grid) do
+    grid
+    |> Enum.reject(&is_symbol/1)
+    |> Enum.reject(fn {coord, _value} -> CoordinateGrid.left?(grid, coord, &is_digit/1) end)
+    |> Enum.filter(fn {coord, _value} = current_cell ->
+      right_neighboring_digits = CoordinateGrid.right_neighbors(grid, coord, &is_digit/1)
+
+      # PERF: Could add some caching to avoid duplicate coordinate lookups
+      Enum.any?([current_cell | right_neighboring_digits], fn {coord, _value} ->
+        CoordinateGrid.neighbors?(grid, coord, &is_symbol/1)
       end)
     end)
-    |> sum_coords_near_symbols()
-  end
-
-  def part2(_args) do
-  end
-
-  def sum_coords_near_symbols({symbols, digits}) do
-    Enum.filter(digits, fn {coord, _value} ->
-      case neighbors(coord, symbols) do
-        [] -> false
-        _has_neigbors -> true
-      end
+    # build up full numbers from digits along the path
+    |> Enum.map(fn {coord, {:digit, value}} ->
+      grid
+      |> CoordinateGrid.right_neighbors(coord, &is_digit/1)
+      |> Enum.reduce(value, fn {_coordinate, {:digit, value}}, number ->
+        number <> value
+      end)
+      |> String.to_integer()
     end)
-    |> Enum.reduce(%{}, fn {coord, value}, sums ->
-      case left_neighbors(coord, digits) do
-        # we are the leftmost
-        [] ->
-          Map.put(
-            sums,
-            coord,
-            Enum.reduce(right_neighbors(coord, digits), to_string(value), fn coord, sum ->
-              sum <> Map.get(digits, coord)
-            end)
-          )
+  end
 
-        lefts ->
-          left_most =
-            List.last(lefts)
-
-          Map.put(
-            sums,
-            left_most,
-            Enum.reduce(
-              right_neighbors(left_most, digits),
-              Map.get(digits, left_most),
-              fn coord, sum ->
-                sum <> Map.get(digits, coord)
-              end
-            )
-          )
-      end
+  def build_number_paths_by_gears(grid) do
+    grid
+    |> Enum.filter(&is_gear/1)
+    |> Enum.filter(fn {gear_coord, _value} ->
+      CoordinateGrid.neighbors?(grid, gear_coord, &is_digit/1)
     end)
-    |> Enum.reduce(0, fn {_coord, value}, sum -> sum + String.to_integer(value) end)
+    |> Enum.map(fn {gear_coord, _value} ->
+      grid
+      |> CoordinateGrid.neighbors(gear_coord, &is_digit/1)
+      |> Enum.map(fn {digit_coord, _value} = cell ->
+        if CoordinateGrid.left?(grid, digit_coord, &is_digit/1) do
+          grid
+          |> CoordinateGrid.left_neighbors(digit_coord, &is_digit/1)
+          |> List.last()
+        else
+          cell
+        end
+      end)
+      |> Enum.reduce(%{}, fn {digit_coord, _value} = cell, acc ->
+        Map.put(acc, digit_coord, cell)
+      end)
+    end)
+    |> Enum.reject(&(map_size(&1) != 2))
+    |> Enum.map(fn lefts ->
+      Enum.map(lefts, fn {coord, {_coord, {:digit, value}}} ->
+        grid
+        |> CoordinateGrid.right_neighbors(coord, &is_digit/1)
+        |> Enum.reduce(value, fn {_coord, {:digit, value}}, number ->
+          number <> value
+        end)
+        |> String.to_integer()
+      end)
+    end)
+    |> Enum.map(&Enum.product/1)
+    |> Enum.sum()
   end
 
-  def left_neighbor({row, col}, coords) do
-    Map.get(coords, {row, col - 1})
-  end
-
-  def left_neighbors({row, col}, coords) do
-    left = {row, col - 1}
-
-    if Map.has_key?(coords, left) do
-      [left | left_neighbors(left, coords)]
-    else
-      []
-    end
-  end
-
-  def right_neighbors({row, col}, coords) do
-    right = {row, col + 1}
-
-    if Map.has_key?(coords, right) do
-      [right | right_neighbors(right, coords)]
-    else
-      []
-    end
-  end
-
-  def neighbors({row, col}, coords) do
-    for row <- [row, row + 1, row - 1],
-        col <- [col, col - 1, col + 1] do
-      {row, col}
-    end
-    |> Enum.filter(fn {row, col} -> Map.has_key?(coords, {row, col}) end)
-  end
+  defp is_digit({_coord, value}), do: match?({:digit, _value}, value)
+  defp is_symbol({_coord, value}), do: match?({:symbol, _value}, value)
+  defp is_gear({_coord, value}), do: match?({:symbol, "*"}, value)
 end
