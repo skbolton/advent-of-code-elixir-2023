@@ -1,9 +1,9 @@
 defmodule AdventOfCode.Day01 do
-  defguard is_digit(number) when number in ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
+  import AdventOfCode.Helpers
 
   def part1(input) do
     input
-    |> String.split("\n", trim: true)
+    |> split_lines()
     |> Enum.reduce(0, fn row, count ->
       row
       |> String.replace(~r|\D|, "", global: true)
@@ -22,7 +22,7 @@ defmodule AdventOfCode.Day01 do
 
   def part2(input) do
     input
-    |> String.split("\n", trim: true)
+    |> split_lines()
     |> Enum.reduce(0, fn row, count ->
       row
       |> String.codepoints()

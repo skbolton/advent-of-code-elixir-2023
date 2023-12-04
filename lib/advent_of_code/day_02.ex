@@ -1,7 +1,9 @@
 defmodule AdventOfCode.Day02 do
+  import AdventOfCode.Helpers
+
   def part1(input) do
     input
-    |> String.split("\n", trim: true)
+    |> split_lines()
     |> Enum.map(&String.split(&1, ": "))
     |> Enum.map(fn ["Game " <> game_number | reveals] ->
       [String.to_integer(game_number) | reveals]
@@ -46,7 +48,7 @@ defmodule AdventOfCode.Day02 do
 
   def part2(input) do
     input
-    |> String.split("\n", trim: true)
+    |> split_lines()
     |> Enum.map(&String.split(&1, ": "))
     |> Enum.map(fn ["Game " <> game_number | reveals] ->
       [String.to_integer(game_number) | reveals]

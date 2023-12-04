@@ -1,4 +1,6 @@
 defmodule AdventOfCode.Day03 do
+  import AdventOfCode.Helpers
+
   def part1(input) do
     input
     |> parse_grid()
@@ -15,7 +17,7 @@ defmodule AdventOfCode.Day03 do
   @spec parse_grid(String.t()) :: CoordinateGrid.t({:digit | :symbol, String.t()})
   def parse_grid(input) do
     input
-    |> String.split("\n", trim: true)
+    |> split_lines()
     |> Enum.map(&String.codepoints/1)
     |> Enum.with_index()
     |> Enum.reduce([], fn {row_values, row}, coordinates ->
@@ -25,7 +27,7 @@ defmodule AdventOfCode.Day03 do
         {".", _col}, coordinates ->
           coordinates
 
-        {digit, col}, coordinates when digit in ~w(0 1 2 3 4 5 6 7 8 9) ->
+        {digit, col}, coordinates when is_digit(digit) ->
           [{{row, col}, {:digit, digit}} | coordinates]
 
         {symbol, col}, coordinates ->
@@ -37,20 +39,20 @@ defmodule AdventOfCode.Day03 do
 
   def build_number_paths_near_symbols(grid) do
     grid
-    |> Enum.reject(&is_symbol/1)
-    |> Enum.reject(fn {coord, _value} -> CoordinateGrid.left?(grid, coord, &is_digit/1) end)
+    |> Enum.reject(&symbol?/1)
+    |> Enum.reject(fn {coord, _value} -> CoordinateGrid.left?(grid, coord, &digit?/1) end)
     |> Enum.filter(fn {coord, _value} = current_cell ->
-      right_neighboring_digits = CoordinateGrid.right_neighbors(grid, coord, &is_digit/1)
+      right_neighboring_digits = CoordinateGrid.right_neighbors(grid, coord, &digit?/1)
 
       # PERF: Could add some caching to avoid duplicate coordinate lookups
       Enum.any?([current_cell | right_neighboring_digits], fn {coord, _value} ->
-        CoordinateGrid.neighbors?(grid, coord, &is_symbol/1)
+        CoordinateGrid.neighbors?(grid, coord, &symbol?/1)
       end)
     end)
     # build up full numbers from digits along the path
     |> Enum.map(fn {coord, {:digit, value}} ->
       grid
-      |> CoordinateGrid.right_neighbors(coord, &is_digit/1)
+      |> CoordinateGrid.right_neighbors(coord, &digit?/1)
       |> Enum.reduce(value, fn {_coordinate, {:digit, value}}, number ->
         number <> value
       end)
@@ -60,17 +62,17 @@ defmodule AdventOfCode.Day03 do
 
   def build_number_paths_by_gears(grid) do
     grid
-    |> Enum.filter(&is_gear/1)
+    |> Enum.filter(&gear?/1)
     |> Enum.filter(fn {gear_coord, _value} ->
-      CoordinateGrid.neighbors?(grid, gear_coord, &is_digit/1)
+      CoordinateGrid.neighbors?(grid, gear_coord, &digit?/1)
     end)
     |> Enum.map(fn {gear_coord, _value} ->
       grid
-      |> CoordinateGrid.neighbors(gear_coord, &is_digit/1)
+      |> CoordinateGrid.neighbors(gear_coord, &digit?/1)
       |> Enum.map(fn {digit_coord, _value} = cell ->
-        if CoordinateGrid.left?(grid, digit_coord, &is_digit/1) do
+        if CoordinateGrid.left?(grid, digit_coord, &digit?/1) do
           grid
-          |> CoordinateGrid.left_neighbors(digit_coord, &is_digit/1)
+          |> CoordinateGrid.left_neighbors(digit_coord, &digit?/1)
           |> List.last()
         else
           cell
@@ -84,7 +86,7 @@ defmodule AdventOfCode.Day03 do
     |> Enum.map(fn lefts ->
       Enum.map(lefts, fn {coord, {_coord, {:digit, value}}} ->
         grid
-        |> CoordinateGrid.right_neighbors(coord, &is_digit/1)
+        |> CoordinateGrid.right_neighbors(coord, &digit?/1)
         |> Enum.reduce(value, fn {_coord, {:digit, value}}, number ->
           number <> value
         end)
@@ -95,7 +97,7 @@ defmodule AdventOfCode.Day03 do
     |> Enum.sum()
   end
 
-  defp is_digit({_coord, value}), do: match?({:digit, _value}, value)
-  defp is_symbol({_coord, value}), do: match?({:symbol, _value}, value)
-  defp is_gear({_coord, value}), do: match?({:symbol, "*"}, value)
+  defp digit?({_coord, value}), do: match?({:digit, _value}, value)
+  defp symbol?({_coord, value}), do: match?({:symbol, _value}, value)
+  defp gear?({_coord, value}), do: match?({:symbol, "*"}, value)
 end
