@@ -252,4 +252,21 @@ defmodule CoordinateGrid do
       {:ok, CoordinateGrid.get(grid, coordinate) != nil}
     end
   end
+
+  defimpl Collectable do
+    def into(grid) do
+      collector_function = fn
+        grid_acc, {:cont, {{x, y}, value}} ->
+          CoordinateGrid.add(grid_acc, {x, y}, value)
+
+        grid_acc, :done ->
+          grid_acc
+
+        _map_set_acc, :halt ->
+          :ok
+      end
+
+      {grid, collector_function}
+    end
+  end
 end

@@ -18,23 +18,21 @@ defmodule AdventOfCode.Day03 do
     |> String.split("\n", trim: true)
     |> Enum.map(&String.codepoints/1)
     |> Enum.with_index()
-    |> Enum.reduce(
-      CoordinateGrid.new(),
-      fn {row_values, row}, grid ->
-        row_values
-        |> Enum.with_index()
-        |> Enum.reduce(grid, fn
-          {".", _col}, grid ->
-            grid
+    |> Enum.reduce([], fn {row_values, row}, coordinates ->
+      row_values
+      |> Enum.with_index()
+      |> Enum.reduce(coordinates, fn
+        {".", _col}, coordinates ->
+          coordinates
 
-          {digit, col}, grid when digit in ~w(0 1 2 3 4 5 6 7 8 9) ->
-            CoordinateGrid.add(grid, {row, col}, {:digit, digit})
+        {digit, col}, coordinates when digit in ~w(0 1 2 3 4 5 6 7 8 9) ->
+          [{{row, col}, {:digit, digit}} | coordinates]
 
-          {symbol, col}, grid ->
-            CoordinateGrid.add(grid, {row, col}, {:symbol, symbol})
-        end)
-      end
-    )
+        {symbol, col}, coordinates ->
+          [{{row, col}, {:symbol, symbol}} | coordinates]
+      end)
+    end)
+    |> Enum.into(CoordinateGrid.new())
   end
 
   def build_number_paths_near_symbols(grid) do
