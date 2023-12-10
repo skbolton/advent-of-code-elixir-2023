@@ -12,11 +12,12 @@ defmodule AdventOfCode.Day06Test do
     assert 288 = part1(input)
   end
 
-  @tag :skip
   test "part2" do
-    input = nil
-    result = part2(input)
+    input = """
+    Time:      71530
+    Distance:  940200
+    """
 
-    assert result
+    assert 71503 = part2(input)
   end
 end

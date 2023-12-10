@@ -8,7 +8,20 @@ defmodule AdventOfCode.Day06 do
     |> Enum.product()
   end
 
-  def part2(_args) do
+  def part2(input) do
+    input
+    |> split_lines()
+    |> Enum.map(fn line ->
+      line
+      |> String.split(" ", trim: true)
+      |> tl()
+      |> Enum.join()
+      |> String.to_integer()
+      |> List.wrap()
+    end)
+    |> Enum.zip()
+    |> hd()
+    |> find_winning_runs()
   end
 
   def parse(input) do
