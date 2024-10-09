@@ -26,8 +26,8 @@ defmodule AdventOfCode.Day09 do
   end
 
   def build_sequence_end([first | rest] = line) do
-    if Enum.all?(line, fn value -> value == 0 end) do
-      0
+    if Enum.all?(line, fn value -> value == first end) do
+      first
     else
       {diffs, last} =
         rest
@@ -40,8 +40,8 @@ defmodule AdventOfCode.Day09 do
   end
 
   def build_sequence_begin([first | rest] = line) do
-    if Enum.all?(line, fn value -> value == 0 end) do
-      0
+    if Enum.all?(line, fn value -> value == first end) do
+      first
     else
       {diffs, _last} =
         rest
